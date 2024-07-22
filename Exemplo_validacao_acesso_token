@@ -1,0 +1,68 @@
+pm.test("CT001 - Status code é 200", function () {
+    pm.response.to.have.status(200);
+});
+
+// Parse do corpo da resposta
+var JsonData = pm.response.json();
+console.log("access_token --->", JsonData.access_token);
+console.log("token_type --->", JsonData.token_type);
+ 
+// Definindo variáveis de ambiente
+pm.environment.set("access_token", JsonData.access_token);
+ 
+// Teste para verificar se a variável de ambiente foi recuperada com sucesso
+pm.test("CT002 - A variável de ambiente foi recuperada com sucesso", function () {
+    pm.expect(pm.environment.get("access_token")).to.not.be.undefined;
+});
+ 
+// Teste para verificar se o token de acesso está presente
+pm.test("CT003 - Token de acesso está presente", function () {
+    pm.expect(JsonData.access_token).to.not.be.undefined;
+});
+ 
+// Teste para verificar se o tipo de token é Bearer
+pm.test("CT004 - Tipo de token é Bearer", function () {
+    pm.expect(JsonData.token_type).to.equal("Bearer");
+});
+ 
+// Teste para verificar se o token de ID tem um formato JWT válido
+pm.test("CT005 - Token de ID tem um formato JWT válido", function () {
+    if (JsonData.id_token) {
+        var jwtSegments = JsonData.id_token.split('.');
+        pm.expect(jwtSegments.length).to.equal(3); // Verifica se o token possui três segmentos
+    } else {
+        pm.fail("Token de ID não está presente");
+    }
+});
+ 
+// Teste para verificar se o token de ID está presente
+pm.test("CT006 - Token de ID está presente", function () {
+    pm.expect(JsonData.id_token).to.not.be.undefined;
+});
+ 
+// Teste para verificar se o token de acesso não está vazio
+pm.test("CT007 - Token de acesso não está vazio", function () {
+    pm.expect(JsonData.access_token).to.not.be.empty;
+});
+ 
+// Teste para verificar se o token de atualização está presente
+pm.test("CT008 - Token de atualização está presente", function () {
+    pm.expect(JsonData.refresh_token).to.not.be.undefined;
+});
+ 
+// Definindo o schema esperado
+const expectedSchema = {
+    "type": "object",
+    "properties": {
+        "access_token": { "type": "string" },
+        "token_type": { "type": "string" },
+        "id_token": { "type": "string" },
+        "refresh_token": { "type": "string" }
+    },
+    "required": ["access_token", "token_type", "id_token", "refresh_token"]
+};
+ 
+// Teste para verificar se a resposta corresponde ao JSON schema
+pm.test('CT009 - Resposta atende ao JSON Schema', function () {
+    pm.response.to.have.jsonSchema(expectedSchema);
+});
